@@ -1,0 +1,54 @@
+{
+  "entities": {
+    "Employee": {
+      "title": "Employee",
+      "description": "An employee of the mobile shop.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Full name of the employee" },
+        "baseSalary": { "type": "number", "description": "Basic monthly salary" },
+        "role": { "type": "string", "description": "Job title or role" }
+      },
+      "required": ["name", "baseSalary"]
+    },
+    "Attendance": {
+      "title": "Attendance",
+      "description": "Daily attendance record with selfie verification.",
+      "type": "object",
+      "properties": {
+        "employeeName": { "type": "string", "description": "Name of the employee" },
+        "timestamp": { "type": "string", "format": "date-time", "description": "Time of check-in" },
+        "selfie": { "type": "string", "description": "Base64 encoded selfie image" },
+        "location": { "type": "object", "description": "Optional GPS location of check-in" }
+      },
+      "required": ["employeeName", "timestamp", "selfie"]
+    },
+    "Payroll": {
+      "title": "Payroll",
+      "description": "Monthly payroll calculation record.",
+      "type": "object",
+      "properties": {
+        "employeeName": { "type": "string", "description": "Name of the employee" },
+        "month": { "type": "string", "description": "Month in YYYY-MM format" },
+        "totalSalary": { "type": "number", "description": "Total calculated salary" },
+        "attendanceCount": { "type": "number", "description": "Number of days present" },
+        "status": { "type": "string", "enum": ["draft", "paid"] }
+      },
+      "required": ["employeeName", "month", "totalSalary"]
+    }
+  },
+  "firestore": {
+    "/employees/{employeeId}": {
+      "schema": "Employee",
+      "description": "Collection of employee profiles."
+    },
+    "/attendance/{attendanceId}": {
+      "schema": "Attendance",
+      "description": "Collection of daily attendance logs."
+    },
+    "/payroll/{payrollId}": {
+      "schema": "Payroll",
+      "description": "Collection of monthly payroll records."
+    }
+  }
+}

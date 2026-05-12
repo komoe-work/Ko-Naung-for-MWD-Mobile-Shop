@@ -1,0 +1,8 @@
+{
+  "name": "Mobile Shop Attendance & Payroll",
+  "description": "An application for employee attendance tracking with selfie verification and automated payroll calculation.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": []
+}
