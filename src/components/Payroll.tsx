@@ -7,18 +7,59 @@ import { motion } from 'motion/react';
 interface Employee {
   id: string;
   name: string;
+  nameMm?: string;
   baseSalary: number;
 }
 
 interface PayrollItem {
   employeeId: string;
   employeeName: string;
+  employeeNameMm?: string;
   baseSalary: number;
   daysPresent: number;
   calculatedSalary: number;
 }
 
-export default function Payroll() {
+interface PayrollProps {
+  lang: 'en' | 'mm';
+}
+
+export default function Payroll({ lang }: PayrollProps) {
+  const translations = {
+    en: {
+      financial_overview: 'Financial Overview',
+      payroll_desc: 'Monthly payroll processing and staff compensation tracking',
+      refetch: 'Refetch',
+      projected_payout: 'Projected Payout',
+      active_records: 'Active Records',
+      accounting_export: 'Accounting Export',
+      download_pdf: 'Download Monthly PDF',
+      staff_id: 'Staff Identification',
+      base_comp: 'Base Compensation',
+      active_cycles: 'Active Cycles',
+      settlement: 'Settlement Amount',
+      no_records: 'Database contains no records for this period',
+      days: 'Days'
+    },
+    mm: {
+      financial_overview: 'ဘဏ္ဍာရေး အကျဉ်းချုပ်',
+      payroll_desc: 'လစဉ် လစာတွက်ချက်ခြင်းနှင့် ဝန်ထမ်းခံစားခွင့်များ ခြေရာခံခြင်း',
+      refetch: 'အသစ်ပြန်ယူရန်',
+      projected_payout: 'ခန့်မှန်းခြေ ပေးချေမှု',
+      active_records: 'လက်ရှိမှတ်တမ်းများ',
+      accounting_export: 'စာရင်းအင်း ထုတ်ယူရန်',
+      download_pdf: 'လစဉ် PDF ဒေါင်းလုဒ်လုပ်ရန်',
+      staff_id: 'ဝန်ထမ်း အထောက်အထား',
+      base_comp: 'အခြေခံလစာ',
+      active_cycles: 'အလုပ်လုပ်သည့်ရက်',
+      settlement: 'စုစုပေါင်း ပေးချေရန်',
+      no_records: 'ဤကာလအတွက် မှတ်တမ်းအချက်အလက် မရှိသေးပါ',
+      days: 'ရက်'
+    }
+  };
+
+  const t = translations[lang];
+
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().substring(0, 7));
   const [payrollData, setPayrollData] = useState<PayrollItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -66,6 +107,7 @@ export default function Payroll() {
         return {
           employeeId: emp.id,
           employeeName: emp.name,
+          employeeNameMm: emp.nameMm,
           baseSalary: emp.baseSalary,
           daysPresent: uniqueDays,
           calculatedSalary: Math.round(salary * 100) / 100
@@ -84,8 +126,8 @@ export default function Payroll() {
     <div className="space-y-8 pb-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border-b border-slate-200">
         <div>
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight leading-tight">Financial Overview</h2>
-          <p className="text-slate-500 text-sm font-medium mt-1">Monthly payroll processing and staff compensation tracking</p>
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight leading-tight">{t.financial_overview}</h2>
+          <p className="text-slate-500 text-sm font-medium mt-1">{t.payroll_desc}</p>
         </div>
         
         <div className="flex items-center gap-3 bg-white p-2.5 rounded-2xl border border-slate-200 shadow-sm">
@@ -100,7 +142,7 @@ export default function Payroll() {
             onClick={calculatePayroll}
             className="px-4 py-2 bg-[#0F172A] text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg shadow-slate-200"
           >
-            Refetch
+            {t.refetch}
           </button>
         </div>
       </div>
@@ -108,13 +150,13 @@ export default function Payroll() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm border-l-4 border-l-blue-600">
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600">
-              <DollarSign size={20} />
+            <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 font-bold text-xs">
+              MMK
             </div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Projected Payout</p>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{t.projected_payout}</p>
           </div>
-          <h3 className="text-3xl font-black text-slate-900 tracking-tighter font-mono">
-            ${payrollData.reduce((acc, curr) => acc + curr.calculatedSalary, 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+          <h3 className="text-2xl font-black text-slate-900 tracking-tighter font-mono">
+            {payrollData.reduce((acc, curr) => acc + curr.calculatedSalary, 0).toLocaleString()} <span className="text-xs">MMK</span>
           </h3>
         </div>
         
@@ -123,7 +165,7 @@ export default function Payroll() {
             <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center text-green-600">
               <UserCheck size={20} />
             </div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Active Records</p>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{t.active_records}</p>
           </div>
           <h3 className="text-3xl font-black text-slate-900 tracking-tighter font-mono">
             {payrollData.filter(i => i.daysPresent > 0).length} <span className="text-slate-300 font-medium text-lg">/ {payrollData.length}</span>
@@ -138,18 +180,18 @@ export default function Payroll() {
             <ChevronRight size={20} className="text-slate-500 group-hover:text-white group-hover:translate-x-1 transition-all" />
           </div>
           <div className="mt-6">
-            <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Accounting Export</p>
-            <h3 className="text-lg font-black tracking-tight uppercase">Download Monthly PDF</h3>
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">{t.accounting_export}</p>
+            <h3 className="text-lg font-black tracking-tight uppercase">{t.download_pdf}</h3>
           </div>
         </div>
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="bg-slate-50 border-b border-slate-200 py-5 px-8 grid grid-cols-[1.5fr_1fr_1fr_1fr] font-mono text-[11px] font-bold text-slate-500 uppercase tracking-[0.2em]">
-          <div>Staff Identification</div>
-          <div>Base Compensation</div>
-          <div className="text-center">Active Cycles</div>
-          <div className="text-right">Settlement Amount</div>
+          <div>{t.staff_id}</div>
+          <div>{t.base_comp}</div>
+          <div className="text-center">{t.active_cycles}</div>
+          <div className="text-right">{t.settlement}</div>
         </div>
 
         <div className="divide-y divide-slate-100 font-mono">
@@ -159,13 +201,16 @@ export default function Payroll() {
             ))
           ) : payrollData.length === 0 ? (
             <div className="py-20 text-center text-slate-400 font-bold uppercase tracking-widest text-xs">
-              Database contains no records for this period
+              {t.no_records}
             </div>
           ) : (
             payrollData.map((item) => (
               <div key={item.employeeId} className="grid grid-cols-[1.5fr_1fr_1fr_1fr] py-6 px-8 items-center hover:bg-slate-50 transition-colors">
-                <div className="font-black text-slate-900 tracking-tight">{item.employeeName}</div>
-                <div className="text-slate-500 font-bold text-sm tracking-tighter">${item.baseSalary.toLocaleString()}</div>
+                <div className="flex flex-col">
+                  <span className="font-black text-slate-900 tracking-tight">{item.employeeNameMm || item.employeeName}</span>
+                  {item.employeeNameMm && <span className="text-slate-400 text-[10px] font-medium leading-none">({item.employeeName})</span>}
+                </div>
+                <div className="text-slate-500 font-bold text-sm tracking-tighter">{item.baseSalary.toLocaleString()} MMK</div>
                 <div className="text-center">
                   <span className={`
                     px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-widest border
@@ -174,11 +219,11 @@ export default function Payroll() {
                       : 'bg-amber-50 text-amber-700 border-amber-200'
                     }
                   `}>
-                    {item.daysPresent} Days
+                    {item.daysPresent} {t.days}
                   </span>
                 </div>
                 <div className="text-right font-black text-slate-900 text-lg tracking-tighter">
-                  ${item.calculatedSalary.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  {item.calculatedSalary.toLocaleString()} <span className="text-[10px]">MMK</span>
                 </div>
               </div>
             ))

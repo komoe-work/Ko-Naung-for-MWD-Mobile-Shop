@@ -7,11 +7,51 @@ import { motion } from 'motion/react';
 interface AttendanceRecord {
   id: string;
   employeeName: string;
+  employeeNameMm?: string;
   timestamp: Timestamp;
   selfie: string;
 }
 
-export default function AttendanceList() {
+interface AttendanceListProps {
+  lang: 'en' | 'mm';
+}
+
+export default function AttendanceList({ lang }: AttendanceListProps) {
+  const translations = {
+    en: {
+      recent_activity: 'Recent Activity',
+      biometric_log: 'Biometric attendance log for all staff members',
+      realtime_feed: 'Real-time Feed',
+      employee: 'Employee',
+      checkin_time: 'Check-In Time',
+      date: 'Date',
+      status: 'Status',
+      verified: 'VERIFIED',
+      showing: 'Showing latest',
+      entries: 'entries',
+      no_records: 'No records found',
+      no_records_desc: 'Daily attendance logs will appear here once employees check in.',
+      loading_data: 'Crunching attendance data...'
+    },
+    mm: {
+      recent_activity: 'လတ်တလော လှုပ်ရှားမှုများ',
+      biometric_log: 'ဝန်ထမ်းအားလုံး၏ တက်ရောက်မှု မှတ်တမ်း',
+      realtime_feed: 'အချိန်နှင့်တစ်ပြေးညီ ဖော်ပြမှု',
+      employee: 'ဝန်ထမ်း',
+      checkin_time: 'တက်ရောက်ချိန်',
+      date: 'ရက်စွဲ',
+      status: 'အခြေအနေ',
+      verified: 'အတည်ပြုပြီး',
+      showing: 'နောက်ဆုံး',
+      entries: 'ခုကို ပြသနေပါသည်',
+      no_records: 'မှတ်တမ်းများ မရှိသေးပါ',
+      no_records_desc: 'ဝန်ထမ်းများ တက်ရောက်မှု တင်သွင်းပြီးပါက ဤနေရာတွင် ပေါ်လာပါလိမ့်မည်။',
+      loading_data: 'အချက်အလက်များကို ရယူနေပါသည်...'
+    }
+  };
+
+  const t = translations[lang];
+
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -41,7 +81,7 @@ export default function AttendanceList() {
     return (
       <div className="flex flex-col items-center justify-center py-20 grayscale opacity-20">
         <Calendar size={48} className="animate-pulse mb-4" />
-        <p className="text-sm font-medium">Crunching attendance data...</p>
+        <p className="text-sm font-medium">{t.loading_data}</p>
       </div>
     );
   }
@@ -52,8 +92,8 @@ export default function AttendanceList() {
         <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300">
           <Calendar size={32} />
         </div>
-        <h3 className="text-lg font-bold text-gray-900">No records found</h3>
-        <p className="text-gray-500 max-w-xs mx-auto mt-1">Daily attendance logs will appear here once employees check in.</p>
+        <h3 className="text-lg font-bold text-gray-900">{t.no_records}</h3>
+        <p className="text-gray-500 max-w-xs mx-auto mt-1">{t.no_records_desc}</p>
       </div>
     );
   }
@@ -62,13 +102,13 @@ export default function AttendanceList() {
     <div className="space-y-6">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight">Recent Activity</h2>
-          <p className="text-slate-500 text-sm font-medium">Biometric attendance log for all staff members</p>
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight">{t.recent_activity}</h2>
+          <p className="text-slate-500 text-sm font-medium">{t.biometric_log}</p>
         </div>
         <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg border border-slate-200 shadow-sm">
           <Clock size={16} className="text-slate-400" />
           <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest text-nowrap">
-            Real-time Feed
+            {t.realtime_feed}
           </span>
         </div>
       </div>
@@ -76,10 +116,10 @@ export default function AttendanceList() {
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         {/* Table Header */}
         <div className="bg-slate-50 border-b border-slate-200 py-4 px-8 grid grid-cols-[1.5fr_1fr_1fr_0.8fr] font-mono text-[11px] font-bold text-slate-500 uppercase tracking-[0.2em]">
-          <div>Employee</div>
-          <div>Check-In Time</div>
-          <div>Date</div>
-          <div className="text-right">Status</div>
+          <div>{t.employee}</div>
+          <div>{t.checkin_time}</div>
+          <div>{t.date}</div>
+          <div className="text-right">{t.status}</div>
         </div>
 
         {/* Data Rows */}
@@ -102,7 +142,10 @@ export default function AttendanceList() {
                     </div>
                   )}
                 </div>
-                <span className="text-slate-900 font-bold text-sm tracking-tight">{record.employeeName}</span>
+                <div className="flex flex-col">
+                  <span className="text-slate-900 font-bold text-sm tracking-tight">{record.employeeNameMm || record.employeeName}</span>
+                  {record.employeeNameMm && <span className="text-slate-400 text-[10px] font-medium leading-none">({record.employeeName})</span>}
+                </div>
               </div>
               
               <div className="text-slate-700 font-bold text-sm">
@@ -115,7 +158,7 @@ export default function AttendanceList() {
               
               <div className="text-right">
                 <span className="px-2 py-1 bg-green-100 text-green-700 text-[10px] font-bold rounded-full uppercase tracking-widest border border-green-200">
-                  VERIFIED
+                  {t.verified}
                 </span>
               </div>
             </motion.div>
@@ -125,7 +168,7 @@ export default function AttendanceList() {
         {/* Footer */}
         <div className="bg-slate-50 border-t border-slate-200 py-4 px-8 flex items-center justify-between">
           <span className="text-slate-500 text-[11px] font-bold uppercase tracking-widest">
-            Showing latest {records.length} entries
+            {t.showing} {records.length} {t.entries}
           </span>
           <div className="flex gap-2">
             <button className="w-8 h-8 flex items-center justify-center border border-slate-300 bg-white rounded-lg text-slate-400 hover:bg-slate-50 transition-colors shadow-sm">&lt;</button>

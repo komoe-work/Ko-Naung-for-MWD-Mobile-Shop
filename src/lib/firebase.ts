@@ -16,7 +16,17 @@ export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
-export const loginWithGoogle = () => signInWithPopup(auth, googleProvider);
+export const loginWithGoogle = async () => {
+  try {
+    return await signInWithPopup(auth, googleProvider);
+  } catch (err: any) {
+    if (err.code === 'auth/popup-closed-by-user') {
+      console.log('Google Sign-in popup closed by user');
+      return null;
+    }
+    throw err;
+  }
+};
 export const loginWithEmail = (email: string, pass: string) => signInWithEmailAndPassword(auth, email, pass);
 export const logout = () => signOut(auth);
 

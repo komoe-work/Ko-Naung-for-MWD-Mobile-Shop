@@ -4,8 +4,39 @@ import { collection, addDoc, serverTimestamp, getDocs, query, orderBy } from 'fi
 import { Camera, CheckCircle2, AlertCircle, RefreshCcw } from 'lucide-react';
 import { motion } from 'motion/react';
 
-export default function AttendanceForm() {
-  const [employees, setEmployees] = useState<string[]>([]);
+interface AttendanceFormProps {
+  lang: 'en' | 'mm';
+}
+
+export default function AttendanceForm({ lang }: AttendanceFormProps) {
+  const translations = {
+    en: {
+      staff_checkin: 'Staff Check-In',
+      biometric: 'Daily biometric verification via selfie',
+      identity: 'Identity Selection',
+      choose_name: 'Choose your name...',
+      visual: 'Visual Verification',
+      touch: 'Touch to capture selfie',
+      submit: 'Submit Check-In',
+      success: 'Successfully checked in:',
+      fail: 'Failed to submit attendance. Please try again.'
+    },
+    mm: {
+      staff_checkin: 'ဝန်ထမ်းတက်ရောက်မှု မှတ်တမ်းတင်ရန်',
+      biometric: 'နေ့စဉ် မျက်နှာဓာတ်ပုံဖြင့် အတည်ပြုခြင်း',
+      identity: 'လူပုဂ္ဂိုလ်ရွေးချယ်မှု',
+      choose_name: 'သင့်အမည်ကို ရွေးချယ်ပါ...',
+      visual: 'ဓာတ်ပုံအတည်ပြုချက်',
+      touch: 'ဓာတ်ပုံရိုက်ရန် နှိပ်ပါ',
+      submit: 'မှတ်တမ်းတင်ရန်',
+      success: 'အောင်မြင်စွာ မှတ်တမ်းတင်ပြီးပါပြီ:',
+      fail: 'မှတ်တမ်းတင်ရန် မအောင်မြင်ပါ။ နောက်တစ်ကြိမ် ထပ်စမ်းကြည့်ပါ။'
+    }
+  };
+
+  const t = translations[lang];
+
+  const [employees, setEmployees] = useState<{name: string, nameMm?: string}[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState('');
   const [selfie, setSelfie] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -23,17 +54,30 @@ export default function AttendanceForm() {
     try {
       const q = query(collection(db, 'employees'), orderBy('name', 'asc'));
       const snapshot = await getDocs(q);
-      const names = snapshot.docs.map(doc => doc.data().name);
+      const employeeData = snapshot.docs.map(doc => ({
+        name: doc.data().name,
+        nameMm: doc.data().nameMm
+      }));
       
-      // If no employees in DB, use the ones from user's HTML reference as defaults
-      if (names.length === 0) {
-        setEmployees(['ဆရာဆက်', 'ရဲဝင်းထွန်း', 'ကိုကျော်စွာ', 'စည်သူ', 'သူရိန်', 'ဇင်မင်း']);
+      // If no employees in DB, use default ones
+      if (employeeData.length === 0) {
+        setEmployees([
+          { name: 'Sayar Sat', nameMm: 'ဆရာဆက်' },
+          { name: 'Ye Win Tun', nameMm: 'ရဲဝင်းထွန်း' },
+          { name: 'Ko Kyaw Swar', nameMm: 'ကိုကျော်စွာ' },
+          { name: 'Sithu', nameMm: 'စည်သူ' },
+          { name: 'Zin Min', nameMm: 'ဇင်မင်း' },
+          { name: 'Kyaw Thu', nameMm: 'ကျော်သူ' }
+        ]);
       } else {
-        setEmployees(names);
+        setEmployees(employeeData);
       }
     } catch (error) {
       console.error("Error fetching employees:", error);
-      setEmployees(['ဆရာဆက်', 'ရဲဝင်းထွန်း', 'ကိုကျော်စွာ', 'စည်သူ', 'သူရိန်', 'ဇင်မင်း']);
+      setEmployees([
+        { name: 'Sayar Sat', nameMm: 'ဆရာဆက်' },
+        { name: 'Ye Win Tun', nameMm: 'ရဲဝင်းထွန်း' }
+      ]);
     } finally {
       setLoadingEmployees(false);
     }
@@ -58,19 +102,21 @@ export default function AttendanceForm() {
     setMessage(null);
 
     try {
+      const employee = employees.find(e => e.name === selectedEmployee);
       await addDoc(collection(db, 'attendance'), {
         employeeName: selectedEmployee,
+        employeeNameMm: employee?.nameMm || '',
         selfie: selfie,
         timestamp: serverTimestamp(),
       });
 
-      setMessage({ type: 'success', text: `Successfully checked in: ${selectedEmployee}` });
+      setMessage({ type: 'success', text: `${t.success} ${selectedEmployee}` });
       setSelectedEmployee('');
       setSelfie(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, 'attendance');
-      setMessage({ type: 'error', text: 'Failed to submit attendance. Please try again.' });
+      setMessage({ type: 'error', text: t.fail });
     } finally {
       setLoading(false);
     }
@@ -84,13 +130,13 @@ export default function AttendanceForm() {
         className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200"
       >
         <div className="text-center mb-10">
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight">Staff Check-In</h2>
-          <p className="text-slate-500 text-sm font-medium mt-2">Daily biometric verification via selfie</p>
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight">{t.staff_checkin}</h2>
+          <p className="text-slate-500 text-sm font-medium mt-2">{t.biometric}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
           <div className="space-y-2">
-            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-1">Identity Selection</label>
+            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-1">{t.identity}</label>
             <select
               value={selectedEmployee}
               onChange={(e) => setSelectedEmployee(e.target.value)}
@@ -98,15 +144,17 @@ export default function AttendanceForm() {
               className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all appearance-none font-bold text-slate-900"
               disabled={loadingEmployees}
             >
-              <option value="" disabled>Choose your name...</option>
-              {employees.map(name => (
-                <option key={name} value={name}>{name}</option>
+              <option value="" disabled>{t.choose_name}</option>
+              {employees.map(emp => (
+                <option key={emp.name} value={emp.name}>
+                  {emp.nameMm ? `${emp.nameMm} (${emp.name})` : emp.name}
+                </option>
               ))}
             </select>
           </div>
 
           <div className="space-y-2">
-            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-1">Visual Verification</label>
+            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-1">{t.visual}</label>
             <div 
               onClick={() => fileInputRef.current?.click()}
               className={`
@@ -126,7 +174,7 @@ export default function AttendanceForm() {
                   <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm text-slate-400">
                     <Camera size={28} />
                   </div>
-                  <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Touch to capture selfie</span>
+                  <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">{t.touch}</span>
                 </div>
               )}
             </div>
@@ -154,7 +202,7 @@ export default function AttendanceForm() {
             {loading ? (
               <RefreshCcw size={20} className="animate-spin" />
             ) : (
-              'Submit Check-In'
+              t.submit
             )}
           </button>
         </form>

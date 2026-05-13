@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { db, createAuthUserServer, deleteAuthUserServer, handleFirestoreError, OperationType } from '../lib/firebase';
 import { collection, query, onSnapshot, doc, updateDoc, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
 import { UserPlus, ShieldCheck, Mail, Key, ShieldAlert, CheckCircle2, XCircle, Trash2, Shield, User, Loader2 } from 'lucide-react';
@@ -13,7 +13,72 @@ interface Employee {
   hasAuth?: boolean;
 }
 
-export default function UserManagement() {
+interface UserManagementProps {
+  lang: 'en' | 'mm';
+}
+
+export default function UserManagement({ lang }: UserManagementProps) {
+  const translations = {
+    en: {
+      title: 'User Account Control',
+      subtitle: 'Manage employee login credentials and system access',
+      assign_creds: 'Assign Credentials',
+      select_emp: 'Select Employee',
+      choose_emp: 'Choose an employee...',
+      gen_id: 'Generated Email/ID',
+      assign_pw: 'Assign Password',
+      min_chars: 'Min 6 characters',
+      creating: 'Provisioning...',
+      create: 'Create Account',
+      user_list: 'System User List',
+      employee: 'Employee',
+      login_id: 'Login Identity',
+      security: 'Security Level',
+      status: 'Status',
+      admin: 'System Admin',
+      staff: 'Staff',
+      authorized: 'Authorized',
+      pending: 'Pending',
+      no_emp: 'No employees found. Add them in the Team tab first.',
+      no_creds: 'No Credentials',
+      confirm_revoke: 'Are you sure you want to permanently delete the login account for ',
+      revoked: 'Revoked Admin rights from ',
+      promoted: ' is now an Admin',
+      access_revoke_success: 'Access revoked for ',
+      account_created: 'Account created for '
+    },
+    mm: {
+      title: 'အသုံးပြုသူ အကောင့်စီမံခန့်ခွဲမှု',
+      subtitle: 'ဝန်ထမ်းများ၏ ဝင်ရောက်ခွင့် အထောက်အထားများနှင့် စနစ်သုံးစွဲခွင့်ကို စီမံရန်',
+      assign_creds: 'ဝင်ရောက်ခွင့် သတ်မှတ်ရန်',
+      select_emp: 'ဝန်ထမ်းရွေးချယ်ပါ',
+      choose_emp: 'ဝန်ထမ်းတစ်ဦးကို ရွေးချယ်ပါ...',
+      gen_id: 'ထုတ်ပေးထားသော အီးမေးလ်/အိုင်ဒီ',
+      assign_pw: 'စကားဝှက် သတ်မှတ်ပါ',
+      min_chars: 'အနည်းဆုံး ၆ လုံး',
+      creating: 'လုပ်ဆောင်နေပါသည်...',
+      create: 'အကောင့်ဖွင့်မည်',
+      user_list: 'စနစ်အသုံးပြုသူ စာရင်း',
+      employee: 'ဝန်ထမ်း',
+      login_id: 'ဝင်ရောက်ခွင့် အိုင်ဒီ',
+      security: 'လုံခြုံရေးအဆင့်',
+      status: 'အခြေအနေ',
+      admin: 'စီမံခန့်ခွဲသူ',
+      staff: 'ဝန်ထမ်း',
+      authorized: 'ခွင့်ပြုပြီး',
+      pending: 'စောင့်ဆိုင်းဆဲ',
+      no_emp: 'ဝန်ထမ်းစာရင်း မရှိသေးပါ။ ဦးစွာ ဝန်ထမ်းအဖွဲ့သို့ သွားရောက်ပေါင်းထည့်ပါ။',
+      no_creds: 'အထောက်အထား မရှိသေးပါ',
+      confirm_revoke: 'ဝင်ရောက်ခွင့် အကောင့်ကို အပြီးတိုင် ဖျက်ရန် သေချာပါသလား - ',
+      revoked: 'စီမံခန့်ခွဲသူ အခွင့်အရေးကို ရုပ်သိမ်းလိုက်ပြီ - ',
+      promoted: ' ကို စီမံခန့်ခွဲသူအဖြစ် သတ်မှတ်လိုက်ပြီ',
+      access_revoke_success: 'ဝင်ရောက်ခွင့်ကို ရုပ်သိမ်းလိုက်ပြီ - ',
+      account_created: 'အကောင့်ဖွင့်လှစ်ပြီးပြီ - '
+    }
+  };
+
+  const t = translations[lang];
+
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [admins, setAdmins] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,7 +126,7 @@ export default function UserManagement() {
         loginEmail: email
       });
 
-      setSuccess(`Account created for ${selectedEmp.name}`);
+      setSuccess(`${t.account_created} ${selectedEmp.name}`);
       setSelectedEmp(null);
       setNewPassword('');
     } catch (err: any) {
@@ -78,13 +143,13 @@ export default function UserManagement() {
       const isAdmin = admins.includes(emp.authUid);
       if (isAdmin) {
         await deleteDoc(doc(db, 'admins', emp.authUid));
-        setSuccess(`Revoked Admin rights from ${emp.name}`);
+        setSuccess(`${t.revoked}${emp.name}`);
       } else {
         await setDoc(doc(db, 'admins', emp.authUid), { 
           email: (emp as any).loginEmail || emp.email || '',
           promotedAt: new Date().toISOString()
         });
-        setSuccess(`${emp.name} is now an Admin`);
+        setSuccess(`${emp.name}${t.promoted}`);
       }
     } catch (err: any) {
       setError("Failed to update status");
@@ -94,7 +159,7 @@ export default function UserManagement() {
   };
 
   const handleRevokeAccess = async (emp: Employee) => {
-    if (!emp.authUid || !window.confirm(`Are you sure you want to permanently delete the login account for ${emp.name}?`)) return;
+    if (!emp.authUid || !window.confirm(`${t.confirm_revoke}${emp.name}?`)) return;
     
     setProcessingId(emp.id);
     try {
@@ -111,7 +176,7 @@ export default function UserManagement() {
         loginEmail: null
       });
 
-      setSuccess(`Access revoked for ${emp.name}`);
+      setSuccess(`${t.access_revoke_success} ${emp.name}`);
     } catch (err: any) {
       setError(err.message || "Failed to revoke access");
     } finally {
@@ -123,8 +188,8 @@ export default function UserManagement() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-black text-slate-900 mb-1">User Account Control</h2>
-          <p className="text-slate-500 font-medium tracking-tight text-sm">Manage employee login credentials and system access</p>
+          <h2 className="text-2xl font-black text-slate-900 mb-1">{t.title}</h2>
+          <p className="text-slate-500 font-medium tracking-tight text-sm">{t.subtitle}</p>
         </div>
       </div>
 
@@ -136,21 +201,21 @@ export default function UserManagement() {
               <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
                 <UserPlus size={20} />
               </div>
-              <h3 className="font-bold text-slate-800">Assign Credentials</h3>
+              <h3 className="font-bold text-slate-800">{t.assign_creds}</h3>
             </div>
 
             <form onSubmit={handleCreateUser} className="space-y-4">
               <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Select Employee</label>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">{t.select_emp}</label>
                 <select
                   required
                   value={selectedEmp?.id || ''}
                   onChange={(e) => setSelectedEmp(employees.find(emp => emp.id === e.target.value) || null)}
                   className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none font-bold text-slate-900"
                 >
-                  <option value="">Choose an employee...</option>
+                  <option value="">{t.choose_emp}</option>
                   {employees.filter(emp => !emp.hasAuth).map(emp => (
-                    <option key={emp.id} value={emp.id}>{emp.name} ({emp.role})</option>
+                    <option key={emp.id} value={emp.id}>{(emp as any).nameMm || emp.name} ({emp.role})</option>
                   ))}
                 </select>
               </div>
@@ -162,14 +227,14 @@ export default function UserManagement() {
                   className="space-y-4"
                 >
                   <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Generated Email/ID</label>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">{t.gen_id}</label>
                     <div className="px-4 py-3 bg-slate-100 border border-slate-200 rounded-xl font-mono text-xs text-slate-600">
                       {selectedEmp.email || `${selectedEmp.name.toLowerCase().replace(/\s+/g, '')}@mobileshop.local`}
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Assign Password</label>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">{t.assign_pw}</label>
                     <div className="relative">
                       <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                       <input
@@ -177,7 +242,7 @@ export default function UserManagement() {
                         required
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
-                        placeholder="Min 6 characters"
+                        placeholder={t.min_chars}
                         minLength={6}
                         className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none font-bold text-slate-900 text-sm"
                       />
@@ -189,7 +254,7 @@ export default function UserManagement() {
                     disabled={!!creating}
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 px-6 rounded-xl transition-all shadow-lg shadow-blue-200 flex items-center justify-center gap-2 active:scale-95 disabled:bg-slate-400"
                   >
-                    {creating ? "Provisioning..." : "Create Account"}
+                    {creating ? t.creating : t.create}
                   </button>
                 </motion.div>
               )}
@@ -217,7 +282,7 @@ export default function UserManagement() {
             <div className="p-6 border-b border-slate-50 bg-slate-50/50">
               <h3 className="font-bold text-slate-800 flex items-center gap-2">
                 <ShieldCheck className="text-green-500" size={18} />
-                System User List
+                {t.user_list}
               </h3>
             </div>
             
@@ -225,10 +290,10 @@ export default function UserManagement() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50/50">
-                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 tracking-widest uppercase">Employee</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 tracking-widest uppercase">Login Identity</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 tracking-widest uppercase">Security Level</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 tracking-widest uppercase">Status</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 tracking-widest uppercase">{t.employee}</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 tracking-widest uppercase">{t.login_id}</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 tracking-widest uppercase">{t.security}</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 tracking-widest uppercase">{t.status}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
@@ -238,15 +303,15 @@ export default function UserManagement() {
                       <tr key={emp.id} className="hover:bg-slate-50/50 transition-colors group">
                         <td className="px-6 py-4">
                           <div className="font-semibold text-slate-900 flex items-center gap-2">
-                            {emp.name}
+                            {(emp as any).nameMm || emp.name}
                             {isSystemAdmin && <Shield size={12} className="text-purple-500" />}
                           </div>
-                          <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{emp.role}</div>
+                          <div className="text-[10px] text-slate-400 font-black uppercase tracking-tight">{emp.role}</div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="font-mono text-xs text-slate-500 flex items-center gap-2">
                             <Mail size={12} className="text-slate-300" />
-                            {emp.hasAuth ? (emp as any).loginEmail : 'No Credentials'}
+                            {emp.hasAuth ? (emp as any).loginEmail : t.no_creds}
                           </div>
                         </td>
                         <td className="px-6 py-4">
@@ -255,7 +320,7 @@ export default function UserManagement() {
                               px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tight
                               ${isSystemAdmin ? 'bg-purple-100 text-purple-600' : 'bg-slate-100 text-slate-600'}
                             `}>
-                              {isSystemAdmin ? 'System Admin' : 'Staff'}
+                              {isSystemAdmin ? t.admin : t.staff}
                             </span>
                           </div>
                         </td>
@@ -264,12 +329,12 @@ export default function UserManagement() {
                             {emp.hasAuth ? (
                               <div className="flex items-center gap-1.5 text-green-600 font-bold text-[10px] uppercase">
                                 <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                                Authorized
+                                {t.authorized}
                               </div>
                             ) : (
                               <div className="flex items-center gap-1.5 text-slate-400 font-bold text-[10px] uppercase">
                                 <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
-                                Pending
+                                {t.pending}
                               </div>
                             )}
 
@@ -301,7 +366,7 @@ export default function UserManagement() {
                   {employees.length === 0 && !loading && (
                     <tr>
                       <td colSpan={4} className="px-6 py-12 text-center text-slate-400 font-medium">
-                        No employees found. Add them in the Team tab first.
+                        {t.no_emp}
                       </td>
                     </tr>
                   )}
